@@ -100,7 +100,12 @@ public final class MotionProbe {
                 if (d2 < r0i * r0i || d2 > r1i * r1i) continue;
                 int bin = (int) ((Math.atan2(dy, dx) + Math.PI) / (2 * Math.PI) * BINS) % BINS;
                 cnt[bin]++;
-                if (ana[n + y * w + x] == 1) sum[bin]++;
+                // 用亮度加权而不是简单的 0/1 计数：
+                // 花瓣形状规则且对称时，只数「有没有彩色」会让 +20° 和 -20°
+                // 的剖面几乎一样，转角出现镜像歧义；带上亮度差异后能区分开
+                if (ana[n + y * w + x] == 1) {
+                    sum[bin] += ana[y * w + x] / 255f;
+                }
             }
         }
         float[] prof = new float[BINS];
@@ -120,10 +125,14 @@ public final class MotionProbe {
         int best = 0;
         float bestScore = -Float.MAX_VALUE;
         float secondScore = -Float.MAX_VALUE;
-        for (int s = 0; s < BINS; s++) {
+        // 只在小角度内搜索：200ms 内花瓣转过 40° 已属很快，
+        // 放宽到整圈会让 90°/180° 这类对称位置抢走最优解
+        final int maxShift = 4;
+        for (int s = -maxShift; s <= maxShift; s++) {
             float dot = 0;
             for (int i = 0; i < BINS; i++) {
-                dot += a[i] * b[(i + s) % BINS];
+                int idx = ((i + s) % BINS + BINS) % BINS;
+                dot += a[i] * b[idx];
             }
             if (dot > bestScore) {
                 secondScore = bestScore;
@@ -138,7 +147,6 @@ public final class MotionProbe {
         if (secondScore <= 0 || bestScore / secondScore < ROT_MIN_PEAK_RATIO) {
             return Integer.MIN_VALUE;
         }
-        if (best > BINS / 2) best -= BINS;
         return best;
     }
 
