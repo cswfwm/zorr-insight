@@ -257,6 +257,7 @@ public class VisionPreviewActivity extends AppCompatActivity {
                         u.atk = st.optDouble("damage", Double.NaN);
                         u.def = st.optDouble("armor", Double.NaN);
                     }
+                    // 识别出的名字统一换成图鉴里的官方名
                     u.name = wiki.displayName(key);
                 }
                 out.add(u);
@@ -310,7 +311,14 @@ public class VisionPreviewActivity extends AppCompatActivity {
         row.setLayoutParams(lp);
 
         TextView name = new TextView(this);
-        name.setText(u.name.isEmpty() ? "未知单位" : u.name);
+        if (u.name.isEmpty()) {
+            name.setText("未读到名称");
+        } else if (u.atk != u.atk && u.def != u.def) {
+            // 名字查不到图鉴，说明可能是模型猜的或写错了，不能当成确定结论展示
+            name.setText(u.name + "（图鉴未收录）");
+        } else {
+            name.setText(u.name);
+        }
         name.setTextSize(13);
         name.setTextColor(UnitOverlay.colorFor(u));
         row.addView(name);

@@ -92,9 +92,22 @@ public final class WikiData {
             String label = m.optJSONObject(k) == null ? "" : m.optJSONObject(k).optString("name", "");
             if (label.replace(" ", "").toLowerCase().equals(q)) return k;
         }
+        // 中文名匹配：视觉模型常返回「岩石」「蜜蜂」这类中文，英文名对不上
+        final String raw = query.trim();
         for (String k : keys) {
-            String label = m.optJSONObject(k) == null ? "" : m.optJSONObject(k).optString("name", "");
-            if (k.contains(q) || label.toLowerCase().contains(q)) return k;
+            String cn = zhMobs == null ? "" : zhMobs.optString(k, "");
+            if (!cn.isEmpty() && cn.equals(raw)) return k;
+        }
+        for (String k : keys) {
+            String cn = zhMobs == null ? "" : zhMobs.optString(k, "");
+            if (!cn.isEmpty() && cn.contains(raw)) return k;
+        }
+        // 最后才做英文模糊匹配，且要求查询串足够长，避免单字命中一堆无关结果
+        if (q.length() >= 3) {
+            for (String k : keys) {
+                String label = m.optJSONObject(k) == null ? "" : m.optJSONObject(k).optString("name", "");
+                if (k.contains(q) || label.toLowerCase().contains(q)) return k;
+            }
         }
         return null;
     }
