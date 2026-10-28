@@ -1,0 +1,40 @@
+{
+ "date": "2026-10-28",
+ "real_screenshot": {
+  "file": "Screenshot_2026-10-28-12-47-28-854_com.zorrinsight.jpg",
+  "truth_units": 2,
+  "note": "岩石(怪物) + 玩家自己(粉色血条)，两者都是有效血条",
+  "before": {
+   "detected": 11,
+   "true": 1,
+   "precision": 0.09
+  },
+  "after": {
+   "detected": 2,
+   "true": 2,
+   "precision": 1.0,
+   "recall": 1.0
+  }
+ },
+ "synthetic_test": {
+  "truth_units": 10,
+  "detected": 10,
+  "recall": 1.0,
+  "precision": 1.0,
+  "distractors": {
+   "toolbar_buttons": 6,
+   "name_bars": 4,
+   "petal_slots": 6,
+   "all_rejected": true
+  }
+ },
+ "criteria": {
+  "fill": "max>=190 && max-min>=60",
+  "thickness": "4..14",
+  "width": "40..300",
+  "aspect": "width/thickness>=6.0",
+  "uniformity": "stdev(R)+stdev(G)+stdev(B) <= 22",
+  "dark_border": "dark pixel within 2px above and below",
+  "clean_ground": "green-dominant, g-min>60, 90<lum<230 at 4/6px offsets, ratio>=0.75"
+ }
+}

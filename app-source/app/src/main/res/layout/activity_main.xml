@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    android:orientation="vertical">
+
+    <!-- 顶部栏：左侧背包入口，右侧分析入口。不覆盖游戏区。 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="#FFFFFF"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp">
+
+        <TextView
+            android:id="@+id/btnBag"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="背包"
+            android:textColor="#1B1B1B"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnRails"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="侧栏"
+            android:textColor="#1B1B1B"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnAccounts"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="账号"
+            android:textColor="#1B1B1B"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnAI"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="AI 采集"
+            android:textColor="#1B1B1B"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnTrain"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="训练"
+            android:textColor="#1B1B1B"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text=""
+            android:textColor="#9AA0A6"
+            android:textSize="11sp" />
+
+        <TextView
+            android:id="@+id/btnVision"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="视觉"
+            android:textColor="#1B1B1B"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/btnAnalyze"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="解析"
+            android:textColor="#1B1B1B"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- 本体：按 2:1 分配，左右为侧栏区；侧栏收起时游戏区占满 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/leftRail"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#FAFBFC"
+            android:gravity="center"
+            android:padding="6dp"
+            android:text="背包"
+            android:textColor="#9AA0A6"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <FrameLayout
+            android:id="@+id/gameArea"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            android:background="#FFFFFF">
+
+            <WebView
+                android:id="@+id/web"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+
+
+            <TextView
+                android:id="@+id/tvLoading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:background="#F2F3F5"
+                android:padding="12dp"
+                android:text="正在载入…"
+                android:textColor="#5F6368"
+                android:textSize="13sp" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/rightRail"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#FAFBFC"
+            android:gravity="center"
+            android:padding="6dp"
+            android:text="分析"
+            android:textColor="#9AA0A6"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- 底部抽屉：收起时只占一行，上滑唤出完整训练面板 -->
+    <LinearLayout
+        android:id="@+id/bottomSheet"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:orientation="vertical"
+        android:paddingStart="12dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="6dp">
+
+        <!-- 把手条：点击或上滑展开 -->
+        <LinearLayout
+            android:id="@+id/sheetHandle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp">
+
+            <View
+                android:layout_width="28dp"
+                android:layout_height="3dp"
+                android:background="#D5D8DC" />
+
+            <TextView
+                android:id="@+id/tvRegion"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="区域：待采样"
+                android:textColor="#1B1B1B"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvSheetArrow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="上滑 ▲"
+                android:textColor="#9AA0A6"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- 收起时也显示的一行摘要 -->
+        <TextView
+            android:id="@+id/tvDetect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="画面单位 0 个"
+            android:textColor="#7A7F85"
+            android:textSize="11sp" />
+
+        <!-- 展开区：训练面板 -->
+        <LinearLayout
+            android:id="@+id/sheetBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.zorrinsight.ui.OverlayView
+                android:id="@+id/overlay"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:layout_marginTop="2dp" />
+
+            <TextView
+                android:id="@+id/tvModel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="模型：样本 0 · 未训练"
+                android:textColor="#7A7F85"
+                android:textSize="12sp" />
+
+            <com.zorrinsight.ui.NetView
+                android:id="@+id/netView"
+                android:layout_width="match_parent"
+                android:layout_height="96dp"
+                android:layout_marginTop="4dp" />
+
+            <com.zorrinsight.ui.SparkView
+                android:id="@+id/spark"
+                android:layout_width="match_parent"
+                android:layout_height="36dp"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

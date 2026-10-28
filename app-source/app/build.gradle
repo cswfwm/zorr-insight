@@ -1,0 +1,49 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.zorrinsight'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.zorrinsight"
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("keystore.p12")
+            storePassword "neuroshoot123"
+            storeType "PKCS12"
+            keyAlias "neuroshoot"
+            keyPassword "neuroshoot123"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // 掉落数据体积较大，必须保持未压缩存储以便直接 mmap 读取
+    androidResources {
+        noCompress 'json'
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}

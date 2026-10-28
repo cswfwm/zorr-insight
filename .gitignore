@@ -1,0 +1,18 @@
+# 构建产物
+app-source/app/build/
+app-source/build/
+app-source/.gradle/
+dist/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 签名密钥：含私钥，不进版本库。
+# 构建前请把它放回 app-source/app/keystore.p12（见 README 的「构建」一节）
+app-source/app/keystore.p12
