@@ -20,6 +20,10 @@ public final class MotionProbe {
     }
 
     private static final int BINS = 36;
+    /** 采集图相对原始画面的缩小倍数；位移要乘回去才是真实像素。 */
+    private static final float SCALE_BACK = 3f;
+    /** 转速可信度：相关峰值与均值之比低于此值时，认为没有可靠旋转，返回 NaN。 */
+    private static final float ROT_MIN_PEAK_RATIO = 1.6f;
 
     /** 计算两帧之间的转动与位移。reason 为空表示成功。 */
     public static Motion estimate(Bitmap prev, Bitmap cur, long dtMs) {
@@ -48,7 +52,8 @@ public final class MotionProbe {
 
         float[] d = flow(anaA, anaB, w, h, cx, cy, rMax);
         if (d != null) {
-            float px = (float) Math.hypot(d[0], d[1]);
+            // 这里量的是缩放图上的位移；乘 3 还原成画面原始像素
+            float px = (float) Math.hypot(d[0], d[1]) * SCALE_BACK;
             m.pxPerSec = px * 1000f / dtMs;
         }
         return m;
@@ -114,15 +119,24 @@ public final class MotionProbe {
 
         int best = 0;
         float bestScore = -Float.MAX_VALUE;
+        float secondScore = -Float.MAX_VALUE;
         for (int s = 0; s < BINS; s++) {
             float dot = 0;
             for (int i = 0; i < BINS; i++) {
                 dot += a[i] * b[(i + s) % BINS];
             }
             if (dot > bestScore) {
+                secondScore = bestScore;
                 bestScore = dot;
                 best = s;
+            } else if (dot > secondScore) {
+                secondScore = dot;
             }
+        }
+        // 峰值不够突出说明剖面近似平坦（花瓣稀疏或颜色接近地面），
+        // 此时任何位移都能"匹配上"，算出来的转速是随机的，直接判为不可测
+        if (secondScore <= 0 || bestScore / secondScore < ROT_MIN_PEAK_RATIO) {
+            return Integer.MIN_VALUE;
         }
         if (best > BINS / 2) best -= BINS;
         return best;
@@ -133,10 +147,13 @@ public final class MotionProbe {
                                 int cx, int cy, int rMax) {
         int inner = (int) (rMax * 0.45f);
         int outer = (int) (rMax * 0.95f);
-        final int step = 5;
-        final int range = 10;
+        // 缩放图上的位移：玩家正常移动速度下，200ms 可移动 20~40px，
+        // 范围的 10px 太小，匹配不上就给 0，这是移速显示不对的主因
+        final int step = 4;
+        final int range = 30;
 
         float bestScore = Float.MAX_VALUE;
+        float zeroScore = -1;
         float[] best = null;
         for (int dy = -range; dy <= range; dy++) {
             for (int dx = -range; dx <= range; dx++) {
@@ -157,11 +174,17 @@ public final class MotionProbe {
                 }
                 if (n < 40) continue;
                 float score = sad / n;
+                if (dx == 0 && dy == 0) zeroScore = score;
                 if (score < bestScore) {
                     bestScore = score;
                     best = new float[]{dx, dy};
                 }
             }
+        }
+        // 最佳位移若与"不动"几乎一样好，说明画面没有可用纹理，
+        // 此时任何位移都是噪声
+        if (best != null && zeroScore >= 0 && bestScore > zeroScore * 0.92f) {
+            return null;
         }
         return best;
     }

@@ -64,6 +64,14 @@ public class VisionPreviewActivity extends AppCompatActivity {
         head.addView(title, new LinearLayout.LayoutParams(0,
                 LinearLayout.LayoutParams.WRAP_CONTENT, 1));
 
+        TextView regionBtn = new TextView(this);
+        regionBtn.setText("识别区域");
+        regionBtn.setTextSize(13);
+        regionBtn.setTextColor(Color.parseColor("#1EA761"));
+        regionBtn.setPadding(dp(8), dp(4), dp(6), dp(4));
+        regionBtn.setOnClickListener(v -> recognizeRegion());
+        head.addView(regionBtn);
+
         TextView recognize = new TextView(this);
         recognize.setText("识别单位");
         recognize.setTextSize(13);
@@ -188,6 +196,71 @@ public class VisionPreviewActivity extends AppCompatActivity {
         infoView.setText(sb.toString());
     }
 
+    /**
+     * 识别小地图下方的区域名。
+     *
+     * 像素法靠字符块数判断，Hel（3 个字）和 Jungle（6 个字）在字形粘连时容易混，
+     * 所以把该区域裁出来交给模型直接读字。
+     */
+    private void recognizeRegion() {
+        Bitmap src = sharedFrame;
+        if (src == null || src.isRecycled()) {
+            Toast.makeText(this, "还没有采集到画面", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        VisionClient vc = new VisionClient(this);
+        if (!vc.configured()) {
+            Toast.makeText(this, "请先在设置里配置 AI 接口", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 裁右上角小地图一带（含下方区域名），放大后送模型
+        int x0 = (int) (src.getWidth() * 0.78f);
+        int y0 = (int) (src.getHeight() * 0.08f);
+        int x1 = src.getWidth();
+        int y1 = (int) (src.getHeight() * 0.40f);
+        x1 = Math.min(x1, src.getWidth());
+        y1 = Math.min(y1, src.getHeight());
+        if (x1 - x0 < 20 || y1 - y0 < 20) {
+            Toast.makeText(this, "画面太小，无法裁剪小地图区域", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Bitmap crop = Bitmap.createBitmap(src, x0, y0, x1 - x0, y1 - y0);
+        Bitmap big = Bitmap.createScaledBitmap(crop,
+                crop.getWidth() * 3, crop.getHeight() * 3, true);
+        crop.recycle();
+        byte[] png = VisionClient.toPng(big);
+        big.recycle();
+
+        // 像素法初判作为提示，让模型对照
+        com.zorrinsight.probe.RegionProbe.Region rough =
+                com.zorrinsight.probe.RegionProbe.read(src);
+        Toast.makeText(this, "正在识别区域…", Toast.LENGTH_SHORT).show();
+
+        vc.readRegion(png, rough.name, new VisionClient.Cb() {
+            @Override
+            public void onOk(String text) {
+                String raw = text.trim().replace("\"", "").replace("`", "").trim();
+                runOnUiThread(() -> {
+                    if (raw.equalsIgnoreCase("UNKNOWN") || raw.isEmpty()) {
+                        infoView.setText("区域：未能读出（像素法初判 "
+                                + rough.name + "，置信度 "
+                                + Math.round(rough.confidence * 100) + "%）");
+                        return;
+                    }
+                    String cn = com.zorrinsight.data.WikiData.get(
+                            VisionPreviewActivity.this).regionName(raw);
+                    infoView.setText("区域：" + raw + (cn.equalsIgnoreCase(raw) ? "" : "（" + cn + "）"));
+                });
+            }
+
+            @Override
+            public void onErr(String message) {
+                runOnUiThread(() -> infoView.setText("区域识别失败：" + message));
+            }
+        });
+    }
+
     /** 调视觉模型识别画面里的单位。 */
     private void recognizeUnits() {
         Bitmap src = sharedFrame;
@@ -202,9 +275,17 @@ public class VisionPreviewActivity extends AppCompatActivity {
         }
         Toast.makeText(this, "正在识别…", Toast.LENGTH_SHORT).show();
 
-        Bitmap big = Bitmap.createScaledBitmap(src, src.getWidth() * 2, src.getHeight() * 2, true);
-        byte[] png = VisionClient.toPng(big);
-        if (big != src) big.recycle();
+        // 原图已经足够清晰，不再放大（放大只会让体积暴涨、模型端再被压缩）。
+        // 若原图本身很宽，长边限制在 1600 以内，避免上传过慢。
+        Bitmap send = src;
+        int maxEdge = Math.max(src.getWidth(), src.getHeight());
+        if (maxEdge > 1600) {
+            float k = 1600f / maxEdge;
+            send = Bitmap.createScaledBitmap(src,
+                    Math.round(src.getWidth() * k), Math.round(src.getHeight() * k), true);
+        }
+        byte[] png = VisionClient.toPng(send);
+        if (send != src && send != null) send.recycle();
 
         vc.readText(png, 900, new VisionClient.Cb() {
             @Override

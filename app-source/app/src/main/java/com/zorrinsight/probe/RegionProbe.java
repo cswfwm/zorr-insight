@@ -30,9 +30,12 @@ public final class RegionProbe {
     }
 
     /** 各区域名在 13px 字高下的参考值：字符块数、宽高比上限附近。 */
+    // 字符块数按实际单词字母数估：Garden 6、Desert 6、Ocean 5、Jungle 6、Hel 3。
+    // 粘连会让块数偏少，所以这里给的是「预期下限」，判据也允许一定误差。
+    // 但 Hel(3) 与 Jungle(6) 差距太小容易混，实际以视觉模型读字为准，这里只做兜底。
     private static final String[] NAMES = {"Garden", "Desert", "Ocean", "Jungle", "Hel"};
-    private static final int[] CHAR_BLOCKS = {5, 5, 3, 5, 2};
-    private static final float[] ASPECT = {4.6f, 4.5f, 3.6f, 4.6f, 1.9f};
+    private static final int[] CHAR_BLOCKS = {6, 6, 5, 6, 3};
+    private static final float[] ASPECT = {4.6f, 4.5f, 3.6f, 4.6f, 2.2f};
 
     public static Region read(Bitmap bmp) {
         if (bmp == null) return new Region("Unknown", 0, "—", false);
@@ -55,7 +58,9 @@ public final class RegionProbe {
                     name = NAMES[i];
                 }
             }
-            if (conf < 0.55f) {
+            // 置信度不够就返回 Unknown，交给上层用视觉模型复核，
+            // 不要硬猜——之前 Hel 和 Jungle 就是这样被认混的
+            if (conf < 0.80f) {
                 name = "Unknown";
             }
         }

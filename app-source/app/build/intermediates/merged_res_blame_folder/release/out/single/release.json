@@ -1,0 +1,30 @@
+[
+    {
+        "merged": "/root/.gradle/daemon/8.9/com.zorrinsight.app-merged_res-20:/drawable_bg_chip.xml.flat",
+        "source": "/root/.gradle/daemon/8.9/com.zorrinsight.app-main-21:/drawable/bg_chip.xml"
+    },
+    {
+        "merged": "/root/.gradle/daemon/8.9/com.zorrinsight.app-merged_res-20:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "/root/.gradle/daemon/8.9/com.zorrinsight.app-main-21:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "/root/.gradle/daemon/8.9/com.zorrinsight.app-merged_res-20:/drawable_bg_card.xml.flat",
+        "source": "/root/.gradle/daemon/8.9/com.zorrinsight.app-main-21:/drawable/bg_card.xml"
+    },
+    {
+        "merged": "/root/.gradle/daemon/8.9/com.zorrinsight.app-merged_res-20:/drawable_bg_sheet.xml.flat",
+        "source": "/root/.gradle/daemon/8.9/com.zorrinsight.app-main-21:/drawable/bg_sheet.xml"
+    },
+    {
+        "merged": "/root/.gradle/daemon/8.9/com.zorrinsight.app-merged_res-20:/layout_activity_main.xml.flat",
+        "source": "/root/.gradle/daemon/8.9/com.zorrinsight.app-main-21:/layout/activity_main.xml"
+    },
+    {
+        "merged": "com.zorrinsight.app-merged_res-20:/layout_activity_main.xml.flat",
+        "source": "com.zorrinsight.app-main-21:/layout/activity_main.xml"
+    },
+    {
+        "merged": "/root/.gradle/daemon/8.9/com.zorrinsight.app-merged_res-20:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "/root/.gradle/daemon/8.9/com.zorrinsight.app-main-21:/mipmap-anydpi-v26/ic_launcher.xml"
+    }
+]

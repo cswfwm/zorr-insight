@@ -66,6 +66,12 @@ public class MainActivity extends AppCompatActivity {
     private NetView netView;
     private long lastFpsAt;
     private int frameCount;
+    /** 运动采样计数器：每 30 帧触发一次自动识别。 */
+    private int motionFrames;
+    private volatile boolean autoRecognizing;
+    /** 自动识别结果，供视觉页显示。 */
+    private volatile String autoRegion = "";
+    private volatile long autoRegionAt;
     private float fps;
     private boolean running = true;
 
@@ -101,10 +107,13 @@ public class MainActivity extends AppCompatActivity {
         });
         findViewById(R.id.btnAI).setOnClickListener(v -> seedFromAi());
         findViewById(R.id.btnTrain).setOnClickListener(v -> toggleAutoTrain());
-        findViewById(R.id.tvTitle).setOnClickListener(v ->
+        // 设置入口。此前绑在一个空白 TextView 上（宽度 0dp、无文字），
+        // 实际点不到，用户找不到切换模型的地方
+        findViewById(R.id.btnSettings).setOnClickListener(v ->
                 startActivity(new Intent(this, SettingsActivity.class)));
 
         setupWeb();
+        checkUpdate();
         trainer.startTraining(1200);
         ping.start("zorr.pro", 443, 4000);
         ui.postDelayed(this::tick, 1500);
@@ -145,6 +154,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void captureAsync(FrameCb cb) {
+        captureAsync(cb, 3);
+    }
+
+    /**
+     * @param downscale 缩放分母。检测与训练用 3（省内存、够用）；
+     *                  视觉识别用 1（原始分辨率），否则小字被压掉后模型只能靠外形猜。
+     */
+    private void captureAsync(FrameCb cb, int downscale) {
         if (web == null) {
             cb.onFrame(null);
             return;
@@ -162,8 +179,9 @@ public class MainActivity extends AppCompatActivity {
         web.getLocationInWindow(loc);
         final int wx = loc[0], wy = loc[1];
 
-        final int outW = Math.max(1, w / 3);
-        final int outH = Math.max(1, h / 3);
+        final int ds = Math.max(1, downscale);
+        final int outW = Math.max(1, w / ds);
+        final int outH = Math.max(1, h / ds);
         final Bitmap scaled = Bitmap.createBitmap(outW, outH, Bitmap.Config.ARGB_8888);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -176,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
                 int winW = dw.getDecorView().getWidth();
                 int winH = dw.getDecorView().getHeight();
                 if (winW <= 0 || winH <= 0) {
-                    fallbackCapture(cb, scaled);
+                    fallbackCapture(cb, scaled, ds);
                     return;
                 }
                 final Bitmap full = Bitmap.createBitmap(winW, winH, Bitmap.Config.ARGB_8888);
@@ -203,13 +221,13 @@ public class MainActivity extends AppCompatActivity {
             } catch (Throwable ignored) {
             }
         }
-        fallbackCapture(cb, scaled);
+        fallbackCapture(cb, scaled, ds);
     }
 
-    private void fallbackCapture(FrameCb cb, Bitmap scaled) {
+    private void fallbackCapture(FrameCb cb, Bitmap scaled, int ds) {
         try {
             Canvas c = new Canvas(scaled);
-            c.scale(1f / 3f, 1f / 3f);
+            c.scale(1f / Math.max(1, ds), 1f / Math.max(1, ds));
             web.draw(c);
             cb.onFrame(scaled);
         } catch (Throwable t) {
@@ -244,6 +262,11 @@ public class MainActivity extends AppCompatActivity {
             prevFrameAt = now;
 
             frameCount++;
+            motionFrames++;
+            if (motionFrames >= 30) {
+                motionFrames = 0;
+                maybeAutoRecognize(frame);
+            }
             if (lastFpsAt == 0) lastFpsAt = now;
             if (now - lastFpsAt >= 1000) {
                 fps = frameCount * 1000f / (now - lastFpsAt);
@@ -255,6 +278,60 @@ public class MainActivity extends AppCompatActivity {
             }
             ui.postDelayed(this::motionTick, 200);
         });
+    }
+
+    /**
+     * 每 30 帧自动识别一次区域名。
+     *
+     * 区域名不常变，没必要每帧都调接口；30 帧（约 6 秒）一次足够及时，
+     * 也避免接口调用过频。上一次还没返回就跳过，不堆积请求。
+     */
+    private void maybeAutoRecognize(Bitmap frame) {
+        if (autoRecognizing || frame == null || frame.isRecycled()) return;
+        com.zorrinsight.net.AiClient ai = new com.zorrinsight.net.AiClient(this);
+        if (!ai.configured()) return;
+        if (System.currentTimeMillis() - autoRegionAt < 5000) return;
+
+        autoRecognizing = true;
+        try {
+            int x0 = (int) (frame.getWidth() * 0.78f);
+            int y0 = (int) (frame.getHeight() * 0.08f);
+            int x1 = Math.min(frame.getWidth(), frame.getWidth());
+            int y1 = Math.min(frame.getHeight(), (int) (frame.getHeight() * 0.40f));
+            if (x1 - x0 < 20 || y1 - y0 < 20) {
+                autoRecognizing = false;
+                return;
+            }
+            Bitmap crop = Bitmap.createBitmap(frame, x0, y0, x1 - x0, y1 - y0);
+            Bitmap big = Bitmap.createScaledBitmap(crop,
+                    crop.getWidth() * 3, crop.getHeight() * 3, true);
+            crop.recycle();
+            byte[] png = com.zorrinsight.net.VisionClient.toPng(big);
+            big.recycle();
+
+            com.zorrinsight.probe.RegionProbe.Region rough =
+                    com.zorrinsight.probe.RegionProbe.read(frame);
+
+            new com.zorrinsight.net.VisionClient(this).readRegion(png, rough.name,
+                    new com.zorrinsight.net.VisionClient.Cb() {
+                        @Override
+                        public void onOk(String text) {
+                            String raw = text.trim().replace("\"", "").replace("`", "").trim();
+                            if (!raw.isEmpty() && !raw.equalsIgnoreCase("UNKNOWN")) {
+                                autoRegion = raw;
+                                autoRegionAt = System.currentTimeMillis();
+                            }
+                            autoRecognizing = false;
+                        }
+
+                        @Override
+                        public void onErr(String message) {
+                            autoRecognizing = false;
+                        }
+                    });
+        } catch (Throwable t) {
+            autoRecognizing = false;
+        }
     }
 
     /** 周期性：读 DOM 文本 + 抓画面 → 检测单位 → 喂训练器。 */
@@ -311,7 +388,8 @@ public class MainActivity extends AppCompatActivity {
         Probe.Snapshot s = lastSnapshot;
         AutoTrainer t = trainer;
 
-        String region = t.lastRegionName();
+        // 自动识别拿到的区域名优先（模型读字比字符块计数可靠）
+        String region = autoRegion.isEmpty() ? t.lastRegionName() : autoRegion;
         String regionCn;
         if (region == null || region.equals("—") || region.equals("Unknown")) {
             regionCn = "待采样";
@@ -354,11 +432,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** 打开视觉预览：展示模型实际看到的那一帧与检测框。 */
+    /**
+     * 打开视觉预览。
+     *
+     * 这里现抓一张原始分辨率的画面给识别用：检测用的那张是 1/3 缩放，
+     * 放大回去也补不回被压掉的小字，模型只能靠外形猜，会把海胆认成向日葵。
+     */
     private void openVision() {
-        VisionPreviewActivity.sharedFrame = lastDetectFrame;
-        VisionPreviewActivity.sharedDetections = lastDetections;
-        startActivity(new Intent(this, VisionPreviewActivity.class));
+        Toast.makeText(this, "正在截取高清画面…", Toast.LENGTH_SHORT).show();
+        captureAsync(frame -> {
+            if (frame != null) {
+                Bitmap old = VisionPreviewActivity.sharedFrame;
+                VisionPreviewActivity.sharedFrame = frame;
+                if (old != null && !old.isRecycled() && old != frame) old.recycle();
+            } else if (VisionPreviewActivity.sharedFrame == null) {
+                VisionPreviewActivity.sharedFrame = lastDetectFrame;
+            }
+            VisionPreviewActivity.sharedDetections = lastDetections;
+            startActivity(new Intent(MainActivity.this, VisionPreviewActivity.class));
+        }, 1);
     }
 
     /** 底部抽屉：默认收起只占一行，上滑或点击把手展开训练面板。 */
@@ -470,6 +562,28 @@ public class MainActivity extends AppCompatActivity {
             if (value != null && value.contains("\"ok\":true")) {
                 Toast.makeText(this, "已填入昵称：" + a.nickname, Toast.LENGTH_SHORT).show();
             }
+        });
+    }
+
+    /** 静默检查更新，有新版才提示，不打扰。 */
+    private void checkUpdate() {
+        com.zorrinsight.net.UpdateChecker.check(this, (newer, latest, url, note) -> {
+            runOnUiThread(() -> {
+                if (!newer || latest.isEmpty()) return;
+                new androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("有新版本 " + latest)
+                        .setMessage("当前版本 " + com.zorrinsight.net.UpdateChecker
+                                .currentVersion(this) + "，是否前往下载？")
+                        .setPositiveButton("前往", (d, w) -> {
+                            try {
+                                startActivity(new Intent(Intent.ACTION_VIEW,
+                                        android.net.Uri.parse(url)));
+                            } catch (Exception ignored) {
+                            }
+                        })
+                        .setNegativeButton("稍后", null)
+                        .show();
+            });
         });
     }
 

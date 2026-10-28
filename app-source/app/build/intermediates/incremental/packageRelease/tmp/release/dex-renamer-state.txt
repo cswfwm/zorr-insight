@@ -1,0 +1,4 @@
+#Thu Oct 29 02:28:22 GMT+08:00 2026
+base.0=/root/workspace/zorr-insight-project/app-source/app/build/intermediates/dex/release/mergeDexRelease/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex

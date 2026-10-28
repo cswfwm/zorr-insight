@@ -37,7 +37,7 @@ public class SettingsActivity extends AppCompatActivity {
         scroll.addView(root);
 
         TextView title = new TextView(this);
-        title.setText("AI 接口");
+        title.setText("AI 接口（v" + com.zorrinsight.net.UpdateChecker.currentVersion(this) + "）");
         title.setTextSize(20);
         title.setTextColor(Color.parseColor("#1B1B1B"));
         root.addView(title);
@@ -106,8 +106,10 @@ public class SettingsActivity extends AppCompatActivity {
         root.addView(visionTitle);
 
         TextView visionNote = new TextView(this);
-        visionNote.setText("识别画面上单位名称、稀有度用。留空则沿用上面的接口与模型。"
-                + "读小字建议用带强 OCR 能力的模型。");
+        visionNote.setText("识别画面上单位名称、稀有度用。留空则沿用上面的接口与模型。\n"
+                + "换模型：改下面的「视觉模型名」，点保存即可。\n"
+                + "建议用带强 OCR 的模型：小字看不清时模型会靠外形猜，"
+                + "比如把海胆认成向日葵。");
         visionNote.setTextSize(11);
         visionNote.setTextColor(Color.parseColor("#7A7F85"));
         visionNote.setPadding(0, dp(6), 0, dp(8));

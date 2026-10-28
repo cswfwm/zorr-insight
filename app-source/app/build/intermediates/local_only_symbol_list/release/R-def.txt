@@ -1,0 +1,37 @@
+R_DEF: Internal format may change without notice
+local
+color ic_launcher_background
+drawable bg_card
+drawable bg_chip
+drawable bg_sheet
+drawable ic_launcher_foreground
+id bottomSheet
+id btnAI
+id btnAccounts
+id btnAnalyze
+id btnBag
+id btnRails
+id btnSettings
+id btnTrain
+id btnVision
+id gameArea
+id leftRail
+id netView
+id overlay
+id rightRail
+id sheetBody
+id sheetHandle
+id spark
+id tvDetect
+id tvLoading
+id tvModel
+id tvRegion
+id tvSheetArrow
+id tvTitle
+id web
+layout activity_main
+mipmap ic_launcher
+string app_name
+string bag_title
+string vision_title
+style Theme.ZorrInsight

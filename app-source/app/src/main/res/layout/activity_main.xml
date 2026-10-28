@@ -6,8 +6,15 @@
     android:orientation="vertical">
 
     <!-- 顶部栏：左侧背包入口，右侧分析入口。不覆盖游戏区。 -->
-    <LinearLayout
+    <HorizontalScrollView
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:scrollbars="none"
+        android:fillViewport="false">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="52dp"
         android:background="#FFFFFF"
         android:gravity="center_vertical"
@@ -90,6 +97,19 @@
             android:textSize="11sp" />
 
         <TextView
+            android:id="@+id/btnSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_chip"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:text="设置"
+            android:textColor="#1B1B1B"
+            android:textSize="14sp" />
+
+        <TextView
             android:id="@+id/btnVision"
             android:layout_width="wrap_content"
             android:layout_height="36dp"
@@ -115,6 +135,7 @@
             android:textColor="#1B1B1B"
             android:textSize="14sp" />
     </LinearLayout>
+    </HorizontalScrollView>
 
     <!-- 本体：按 2:1 分配，左右为侧栏区；侧栏收起时游戏区占满 -->
     <LinearLayout

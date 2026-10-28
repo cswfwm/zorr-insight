@@ -67,6 +67,24 @@ String user = "读出画面里的敌方单位名称。";
         chatWithImage(png, system, user, maxTokens, cb);
     }
 
+    /**
+     * 只读小地图下方的区域名。
+     *
+     * 区域名是简短英文单词（Garden / Desert / Ocean / Jungle / Hel 等），
+     * 靠字符块数去猜容易把 Hel 和 Jungle 认混，交给模型直接读字更可靠。
+     */
+    public void readRegion(byte[] png, String hint, Cb cb) {
+        String system = String.join("\n",
+                "这张图是游戏画面右上角的小地图区域。",
+                "小地图方块的下方有一行区域名（英文），可能是：",
+                "Plains / Desert / Ocean / Jungle / Hel / Arctic / Sewers / Void / Bio / Garden 之一。",
+                "请只输出那行的原文，不要解释，不要加引号。",
+                "看不到就输出 UNKNOWN。");
+        String user = hint == null || hint.isEmpty()
+                ? "读出小地图下方的区域名。" : "像素法初判为 " + hint + "，请确认实际文字。";
+        chatWithImage(png, system, user, 32, cb);
+    }
+
     private void chatWithImage(byte[] png, String system, String user, int maxTokens, Cb cb) {
         POOL.execute(() -> {
             HttpURLConnection c = null;
