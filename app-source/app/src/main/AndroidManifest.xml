@@ -14,6 +14,8 @@
 
         <activity
             android:name=".MainActivity"
+            android:screenOrientation="landscape"
+            android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="true"
             android:windowSoftInputMode="adjustResize">
@@ -24,16 +26,19 @@
         </activity>
 
         <activity
+            android:screenOrientation="landscape"
             android:name=".BagActivity"
             android:exported="false"
             android:label="@string/bag_title" />
 
         <activity
+            android:screenOrientation="landscape"
             android:name=".VisionPreviewActivity"
             android:exported="false"
             android:label="@string/vision_title" />
 
         <activity
+            android:screenOrientation="landscape"
             android:name=".SettingsActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />

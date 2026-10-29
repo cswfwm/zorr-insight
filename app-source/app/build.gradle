@@ -9,8 +9,8 @@ android {
         minSdk 26
         targetSdk 34
         // 版本号与 GitHub Release 对齐：v12.1 → 1201
-        versionCode 1204
-        versionName "12.4"
+        versionCode 1205
+        versionName "12.5"
     }
 
     signingConfigs {
